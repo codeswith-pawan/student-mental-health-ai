@@ -930,23 +930,57 @@ if predict_button:
     }
 
     try:
-        with st.spinner(t("loading")):
-            response = requests.post(API_URL, json=payload, timeout=30)
-            response.raise_for_status()
-            result = response.json()
+        API_BASE_URL = API_URL.rsplit("/predict", 1)[0]
+
+    # Wake up Render backend
+        with st.spinner("⏳ Waking up prediction server..."):
+            try:
+                requests.get(API_BASE_URL, timeout=20)
+            except requests.exceptions.RequestException:
+                pass
+
+        # Prediction with one controlled retry
+        result = None
+        last_error = None
+
+
+        for attempt in range(2):
+            try:
+                with st.spinner(t("loading")):
+                    response = requests.post(
+                        API_URL,
+                        json=payload,
+                        timeout=60
+                    )
+
+                response.raise_for_status()
+                result = response.json()
+                break
+
+            except (
+                requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError
+            ) as e:
+                last_error = e
+
+                if attempt == 0:
+                    import time
+                    time.sleep(2)
+                else:
+                    raise last_error
 
         prediction = float(result["predicted_mental_health_score"])
         prediction = max(0.0, min(10.0, prediction))
 
         st.session_state.api_error = None
         st.session_state.last_result = {
-            "prediction": prediction,
-            "stress_level": stress_level,
-            "physical_activity": physical_activity,
-            "avg_daily_usage": avg_daily_usage,
-            "sleep_hours": sleep_hours,
-            "study_hours": study_hours,
-        }
+        "prediction": prediction,
+        "stress_level": stress_level,
+        "physical_activity": physical_activity,
+        "avg_daily_usage": avg_daily_usage,
+        "sleep_hours": sleep_hours,
+        "study_hours": study_hours,
+    }
 
     except requests.exceptions.ConnectionError:
         st.session_state.api_error = "connection"
