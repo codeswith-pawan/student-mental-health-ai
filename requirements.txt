@@ -2,5 +2,6 @@ streamlit
 pandas
 numpy
 joblib
-scikit-learn==1.6.1fastapi
+scikit-learn==1.6.1
+fastapi
 uvicorn
