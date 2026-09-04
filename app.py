@@ -16,7 +16,7 @@ st.set_page_config(
 # API  (do not change URL, method, or payload keys)
 # =========================================================
 
-API_URL = "https://student-mental-health-ai.onrender.com/predict"
+API_URL = st.secrets["API_URL"]
 
 # =========================================================
 # ML CATEGORY VALUES  (sent to backend — never Hindi)
